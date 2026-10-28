@@ -1,0 +1,139 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  ADMIN
+  OPERATOR
+  CUSTOMER
+}
+
+enum MachineStatus {
+  ONLINE
+  OFFLINE
+  FAULT
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum DispenseStatus {
+  PENDING
+  SUCCESS
+  JAMMED
+}
+
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  username      String   @unique @db.VarChar(50)
+  passwordHash  String   @db.VarChar(255)
+  fullName      String?  @db.VarChar(100)
+  role          UserRole @default(CUSTOMER)
+  createdAt     DateTime @default(now())
+  transactions  Transaction[]
+  restockEvents RestockEvent[]
+}
+
+model Machine {
+  id           String            @id @default(uuid()) @db.Uuid
+  machineCode  String            @unique @db.VarChar(50)
+  locationName String            @db.VarChar(255)
+  status       MachineStatus     @default(OFFLINE)
+  tempMin      Float             @default(2.0)
+  tempMax      Float             @default(8.0)
+  lastPing     DateTime?
+  deviceKeyHash String?          @unique @db.VarChar(64)
+  columns      Column[]
+  transactions Transaction[]
+  tempLogs     TemperatureLog[]
+  restockEvents RestockEvent[]
+}
+
+model Product {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String   @db.VarChar(100)
+  price          Decimal  @db.Decimal(10, 2)
+  shelfLifeHours Int
+  columns        Column[]
+}
+
+model Column {
+  id           String        @id @default(uuid()) @db.Uuid
+  machineId    String        @db.Uuid
+  columnNumber Int
+  productId    String?       @db.Uuid
+  currentStock Int           @default(0)
+  maxCapacity  Int           @default(10)
+  expiryDate   DateTime?
+  machine      Machine       @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  product      Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  transactions Transaction[]
+  restockEvents RestockEvent[]
+  batches      InventoryBatch[]
+
+  @@unique([machineId, columnNumber])
+}
+
+model Transaction {
+  id              String         @id @default(uuid()) @db.Uuid
+  transactionCode String         @unique @db.VarChar(100)
+  machineId       String         @db.Uuid
+  columnId        String         @db.Uuid
+  amount          Decimal        @db.Decimal(10, 2)
+  paymentStatus   PaymentStatus  @default(PENDING)
+  dispenseStatus  DispenseStatus @default(PENDING)
+  createdAt       DateTime       @default(now())
+  customerId      String?        @db.Uuid
+  customer        User?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  machine         Machine        @relation(fields: [machineId], references: [id])
+  column          Column         @relation(fields: [columnId], references: [id])
+}
+
+model TemperatureLog {
+  id          BigInt   @id @default(autoincrement())
+  machineId   String   @db.Uuid
+  temperature Float
+  humidity    Float?
+  doorOpen    Boolean  @default(false)
+  loggedAt    DateTime @default(now())
+  machine     Machine  @relation(fields: [machineId], references: [id], onDelete: Cascade)
+}
+
+model RestockEvent {
+  id           String   @id @default(uuid()) @db.Uuid
+  machineId    String   @db.Uuid
+  columnId     String   @db.Uuid
+  operatorId   String?  @db.Uuid
+  quantity     Int
+  previousStock Int
+  newStock     Int
+  expiryDate   DateTime?
+  createdAt    DateTime @default(now())
+  machine      Machine  @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  column       Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  operator     User?    @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+
+  @@index([machineId, createdAt])
+  @@index([columnId, createdAt])
+  @@index([operatorId])
+}
+
+model InventoryBatch {
+  id         String   @id @default(uuid()) @db.Uuid
+  columnId   String   @db.Uuid
+  quantity   Int
+  expiryDate DateTime?
+  createdAt  DateTime @default(now())
+  column     Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
+
+  @@index([columnId, createdAt])
+  @@index([expiryDate])
+}
