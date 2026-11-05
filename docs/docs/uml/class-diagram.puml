@@ -1,0 +1,115 @@
+@startuml
+hide methods
+skinparam classAttributeIconSize 0
+
+class User {
+  id: UUID
+  username: String
+  passwordHash: String
+  fullName: String?
+  role: UserRole
+  createdAt: DateTime
+}
+class Machine {
+  id: UUID
+  machineCode: String
+  locationName: String
+  status: MachineStatus
+  tempMin: Float
+  tempMax: Float
+  lastPing: DateTime?
+  deviceKeyHash: String?
+}
+class Column {
+  id: UUID
+  machineId: UUID
+  columnNumber: Int
+  productId: UUID?
+  currentStock: Int
+  maxCapacity: Int
+  expiryDate: DateTime?
+}
+class Product {
+  id: UUID
+  name: String
+  price: Decimal
+  shelfLifeHours: Int
+}
+class InventoryBatch {
+  id: UUID
+  columnId: UUID
+  quantity: Int
+  expiryDate: DateTime?
+  createdAt: DateTime
+}
+class Transaction {
+  id: UUID
+  transactionCode: String
+  amount: Decimal
+  paymentStatus: PaymentStatus
+  dispenseStatus: DispenseStatus
+  dispenseRetryCount: Int
+  dispenseErrorCode: String?
+  createdAt: DateTime
+}
+class TemperatureLog {
+  id: BigInt
+  temperature: Float
+  humidity: Float?
+  doorOpen: Boolean
+  sensorOk: Boolean
+  loggedAt: DateTime
+}
+class RestockEvent {
+  id: UUID
+  quantity: Int
+  previousStock: Int
+  newStock: Int
+  expiryDate: DateTime?
+  createdAt: DateTime
+}
+class MachineAction {
+  id: UUID
+  action: String
+  details: String?
+  createdAt: DateTime
+}
+
+enum UserRole {
+  ADMIN
+  OPERATOR
+  CUSTOMER
+}
+enum MachineStatus {
+  ONLINE
+  OFFLINE
+  FAULT
+}
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+enum DispenseStatus {
+  PENDING
+  SUCCESS
+  JAMMED
+}
+
+Machine "1" *-- "0..*" Column
+Product "0..1" -- "0..*" Column
+Column "1" *-- "0..*" InventoryBatch
+Machine "1" -- "0..*" Transaction
+Column "1" -- "0..*" Transaction
+User "0..1" -- "0..*" Transaction : customer
+Machine "1" *-- "0..*" TemperatureLog
+Machine "1" *-- "0..*" RestockEvent
+Column "1" -- "0..*" RestockEvent
+User "0..1" -- "0..*" RestockEvent : operator
+Machine "1" *-- "0..*" MachineAction
+User "0..1" -- "0..*" MachineAction : operator
+User --> UserRole
+Machine --> MachineStatus
+Transaction --> PaymentStatus
+Transaction --> DispenseStatus
+@enduml

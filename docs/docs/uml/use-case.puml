@@ -1,0 +1,49 @@
+@startuml
+left to right direction
+actor Customer
+actor Operator
+actor Admin
+actor "IoT device / simulator" as Device
+
+rectangle "FreshVend" as System {
+  usecase "Browse available catalog" as UC1
+  usecase "Create account / sign in" as UC2
+  usecase "Create demo transaction" as UC3
+  usecase "Simulate payment" as UC4
+  usecase "Simulate dispense result" as UC5
+  usecase "View receipt / jam result" as UC6
+  usecase "View machine, stock and alerts" as UC7
+  usecase "Restock / stocktake" as UC8
+  usecase "View temperature history" as UC9
+  usecase "Clear fault after safe telemetry" as UC10
+  usecase "Manage machines, products and users" as UC11
+  usecase "View analytics / export CSV" as UC12
+  usecase "Send authenticated telemetry" as UC13
+}
+
+Customer --> UC1
+Customer --> UC2
+Customer --> UC3
+Customer --> UC4
+Customer --> UC5
+Customer --> UC6
+Operator --> UC7
+Operator --> UC8
+Operator --> UC9
+Operator --> UC10
+Admin --> UC7
+Admin --> UC8
+Admin --> UC9
+Admin --> UC10
+Admin --> UC11
+Admin --> UC12
+Device --> UC13
+UC3 .> UC1 : validates machine / column / stock
+UC5 .> UC4 : follows successful demo payment
+UC10 .> UC13 : requires recent safe telemetry
+
+note bottom of System
+Payment and dispense are simulated in release 1.0.0.
+No native Flutter / React Native app is included; the web app is installable as a PWA.
+end note
+@enduml

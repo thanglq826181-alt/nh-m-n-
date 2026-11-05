@@ -1,0 +1,35 @@
+@startuml
+actor Customer
+participant "React storefront" as UI
+participant "Express REST API" as API
+database PostgreSQL as DB
+participant "Operations Portal (SSE)" as Ops
+
+Customer -> UI : choose available product and quantity
+UI -> API : GET /api/v1/products/catalog
+API -> DB : read ONLINE machines and unexpired batches
+DB --> API : available catalog
+API --> UI : catalog + price + available stock
+
+loop once for each item in basket
+  UI -> API : POST /api/v1/transactions {machineId,columnId}
+  API -> DB : validate machine, product and stock
+  API -> DB : create PENDING transaction at server price
+  DB --> API : transaction ID and authoritative amount
+  API --> UI : transaction
+  UI -> API : POST /transactions/{id}/simulate-payment SUCCESS
+  API -> DB : conditional PENDING -> SUCCESS
+  API --> UI : demo payment accepted
+  UI -> API : POST /transactions/{id}/simulate-dispense SUCCESS or JAMMED
+  API -> DB : Serializable stock / dispense update
+  DB --> API : final simulated status
+  API --> UI : result
+  API --> Ops : transaction event via SSE
+end
+
+UI --> Customer : demo receipt and delivered / jammed item IDs
+note over Customer,DB
+No external payment provider or physical dispenser is called.
+JAMMED requires staff/refund handling outside this demo.
+end note
+@enduml

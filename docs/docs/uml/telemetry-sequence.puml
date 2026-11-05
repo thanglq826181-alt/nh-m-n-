@@ -1,0 +1,34 @@
+@startuml
+actor "ESP32 or IoT simulator" as Device
+actor Operator
+participant "Telemetry REST API" as API
+database PostgreSQL as DB
+participant "Operations Portal" as Portal
+
+Device -> API : POST /api/v1/telemetry/temperature
+note right of Device
+JSON: machineId, temperature, humidity,
+doorOpen, sensorOk
+Auth: X-Device-Key or staff JWT
+end note
+API -> API : authenticate key / staff role
+API -> DB : insert TemperatureLog and update Machine / lastPing
+DB --> API : persisted measurement and state
+API --> Portal : SSE telemetry event
+Portal -> API : reload alerts / fleet / history
+API --> Portal : updated operations data
+
+Operator -> API : POST /machines/{id}/clear-fault
+API -> DB : verify FAULT and latest safe telemetry <= 2 min
+alt safe telemetry, door closed and temperature in range
+  API -> DB : set ONLINE and write MachineAction audit
+  API --> Operator : fault cleared
+else unsafe, stale or missing telemetry
+  API --> Operator : 409; keep machine in FAULT
+end
+
+note over Device,Portal
+Device uplink is HTTP REST, not MQTT or WebSocket.
+Dashboard updates use SSE plus 30-second polling fallback.
+end note
+@enduml

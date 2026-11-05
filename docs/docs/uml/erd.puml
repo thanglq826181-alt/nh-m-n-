@@ -1,0 +1,109 @@
+@startuml
+hide circle
+skinparam linetype ortho
+
+entity User {
+  * id : UUID <<PK>>
+  --
+  * username : varchar(50) <<UQ>>
+  * passwordHash : varchar(255)
+  fullName : varchar(100)?
+  * role : UserRole
+  * createdAt : timestamp
+}
+entity Machine {
+  * id : UUID <<PK>>
+  --
+  * machineCode : varchar(50) <<UQ>>
+  * locationName : varchar(255)
+  * status : MachineStatus
+  * tempMin : float
+  * tempMax : float
+  lastPing : timestamp?
+  deviceKeyHash : varchar(64)? <<UQ>>
+}
+entity Product {
+  * id : UUID <<PK>>
+  --
+  * name : varchar(100)
+  * price : decimal(10,2)
+  * shelfLifeHours : int
+}
+entity Column {
+  * id : UUID <<PK>>
+  --
+  * machineId : UUID <<FK>>
+  * columnNumber : int
+  productId : UUID? <<FK>>
+  * currentStock : int
+  * maxCapacity : int
+  expiryDate : timestamp?
+}
+note right of Column : UNIQUE(machineId, columnNumber)
+entity InventoryBatch {
+  * id : UUID <<PK>>
+  --
+  * columnId : UUID <<FK>>
+  * quantity : int
+  expiryDate : timestamp?
+  * createdAt : timestamp
+}
+entity Transaction {
+  * id : UUID <<PK>>
+  --
+  * transactionCode : varchar(100) <<UQ>>
+  * machineId : UUID <<FK>>
+  * columnId : UUID <<FK>>
+  * customerId : UUID? <<FK>>
+  * amount : decimal(10,2)
+  * paymentStatus : PaymentStatus
+  * dispenseStatus : DispenseStatus
+  * dispenseRetryCount : int
+  dispenseErrorCode : varchar(50)?
+  * createdAt : timestamp
+}
+entity TemperatureLog {
+  * id : bigint <<PK>>
+  --
+  * machineId : UUID <<FK>>
+  * temperature : float
+  humidity : float?
+  * doorOpen : boolean
+  * sensorOk : boolean
+  * loggedAt : timestamp
+}
+entity RestockEvent {
+  * id : UUID <<PK>>
+  --
+  * machineId : UUID <<FK>>
+  * columnId : UUID <<FK>>
+  operatorId : UUID? <<FK>>
+  * quantity : int
+  * previousStock : int
+  * newStock : int
+  expiryDate : timestamp?
+  * createdAt : timestamp
+}
+entity MachineAction {
+  * id : UUID <<PK>>
+  --
+  * machineId : UUID <<FK>>
+  operatorId : UUID? <<FK>>
+  * action : varchar(50)
+  details : varchar(500)?
+  * createdAt : timestamp
+}
+
+Machine ||--o{ Column : contains
+Product o|--o{ Column : assigned_to
+Column ||--o{ InventoryBatch : stocked_as
+Machine ||--o{ Transaction : occurs_at
+Column ||--o{ Transaction : purchased_from
+User o|--o{ Transaction : customer
+Machine ||--o{ TemperatureLog : records
+Machine ||--o{ RestockEvent : has
+Column ||--o{ RestockEvent : restocked
+User o|--o{ RestockEvent : operator
+Machine ||--o{ MachineAction : audits
+User o|--o{ MachineAction : operator
+@enduml
