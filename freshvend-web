@@ -1,0 +1,15 @@
+freshvend-web/
+├── .github/
+│   ├── workflows/ci.yml
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   └── ISSUE_TEMPLATE/ (feature.md, bug.md)
+├── src/
+│   ├── api/            # axios client, hooks (TanStack Query)
+│   ├── auth/           # login, JWT, route guard theo role
+│   ├── features/
+│   │   ├── fleet/ revenue/ inventory/ coldchain/
+│   │   ├── transactions/ machines/ users/ alerts/ reports/
+│   ├── components/ layouts/ lib/ types/
+├── Dockerfile
+├── .env.example
+└── README.md
