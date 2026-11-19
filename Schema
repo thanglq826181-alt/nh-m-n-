@@ -1,0 +1,15 @@
+CREATE TABLE alerts (
+  id SERIAL PRIMARY KEY,
+  machine_id TEXT NOT NULL,
+  type TEXT NOT NULL,            -- TEMPERATURE | DOOR_OPEN | LOW_STOCK | EXPIRY | JAM | OFFLINE
+  severity TEXT NOT NULL,        -- HIGH | MEDIUM
+  message TEXT,
+  status TEXT NOT NULL DEFAULT 'OPEN',   -- OPEN | ACKNOWLEDGED | RESOLVED
+  created_at TIMESTAMPTZ DEFAULT now(),
+  acked_by INT, acked_at TIMESTAMPTZ,
+  resolved_by INT, resolved_at TIMESTAMPTZ, note TEXT
+);
+
+-- Mỗi (máy, loại) chỉ có 1 alert chưa resolve => chống spam
+CREATE UNIQUE INDEX uq_active_alert
+  ON alerts (machine_id, type) WHERE status <> 'RESOLVED';
