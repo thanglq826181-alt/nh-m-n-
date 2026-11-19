@@ -1,0 +1,5 @@
+Realtime < 2s: telemetry được broadcast ngay khi nhận từ MQTT, trước cả khi chạy Alert Engine.
+Chống spam: ràng buộc ở DB (unique index một phần) cộng với ngưỡng thời gian durationSec, nên có chạy song song nhiều instance cũng không trùng.
+Phát hiện offline: heartbeat (telemetry) cộng timer 10 giây kiểm tra lastSeen.
+Tự khỏi: máy online lại thì alert OFFLINE tự resolve; các alert khác do Operator resolve kèm ghi chú và audit log.
+Hạn chế cần biết: since và lastSeen đang lưu trong RAM, restart server sẽ mất. Khi scale ngang thì chuyển sang Redis.
