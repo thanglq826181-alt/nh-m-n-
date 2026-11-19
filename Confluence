@@ -1,0 +1,24 @@
+FreshVend Home
+├── 1. Project Overview (mục tiêu, team, vai trò, timeline)
+├── 2. Requirements
+│   ├── URS
+│   └── SRS (Functional / Non-functional)
+├── 3. Architecture
+│   ├── System Architecture (Component, Deployment diagram)
+│   ├── ERD
+│   └── Alert Engine Design
+├── 4. Detailed Design
+│   ├── API Specification (link Swagger)
+│   ├── Database Schema
+│   └── UI Wireframes (nhúng Figma)
+├── 5. Dashboard & Mobile (của bạn)
+│   ├── Screen list & user flow
+│   ├── RBAC matrix (Admin vs Operator)
+│   ├── Alert flow & lifecycle
+│   └── Q&A bảo vệ
+├── 6. Test (Test Plan / Test Report)
+├── 7. User Manuals (Customer / Operator / Admin)
+├── 8. Installation Guide
+└── 9. Sprint Notes
+    ├── Sprint 1 Planning / Review / Retro
+    └── ...
