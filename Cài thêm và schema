@@ -1,0 +1,14 @@
+sql
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('ADMIN','OPERATOR')),
+  active BOOLEAN DEFAULT true
+);
+
+-- Operator nào phụ trách máy nào
+CREATE TABLE machine_assignments (
+  user_id INT REFERENCES users(id) ON DELETE CASCADE,
+  machine_id TEXT NOT NULL,
+  PRIMARY KEY (user_id, machine_id)
