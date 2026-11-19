@@ -1,0 +1,39 @@
+js
+import { useEffect, useRef, useState } from 'react';
+
+export function useLiveData(url = 'ws://localhost:3000/ws') {
+  const [telemetry, setTelemetry] = useState({});   // { machineId: [{ts,temp}] }
+  const [alerts, setAlerts] = useState([]);
+  const retry = useRef(0);
+
+  useEffect(() => {
+    let ws, timer, closed = false;
+    const connect = () => {
+      ws = new WebSocket(url);
+      ws.onopen = () => (retry.current = 0);
+      ws.onmessage = (e) => {
+        const ev = JSON.parse(e.data);
+        if (ev.kind === 'TELEMETRY') {
+          setTelemetry(prev => ({
+            ...prev,
+            [ev.machineId]: [...(prev[ev.machineId] || []).slice(-59),
+                             { ts: ev.ts, temp: ev.temp }],
+          }));
+        } else if (ev.kind === 'ALERT_CREATED') {
+          setAlerts(a => [ev.alert, ...a]);
+        } else if (ev.kind === 'ALERT_UPDATED') {
+          setAlerts(a => ev.alert.status === 'RESOLVED'
+            ? a.filter(x => x.id !== ev.alert.id)
+            : a.map(x => (x.id === ev.alert.id ? ev.alert : x)));
+        }
+      };
+      ws.onclose = () => {            // tự reconnect, tăng dần thời gian chờ
+        if (closed) return;
+        timer = setTimeout(connect, Math.min(1000 * 2 ** retry.current++, 15000));
+      };
+    };
+    connect();
+    return () => { closed = true; clearTimeout(timer); ws?.close(); };
+  }, [url]);
+
+  return { telemetry, alerts, setAlerts };
